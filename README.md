@@ -1,7 +1,7 @@
 # Panorama Stitching with Advanced Blending 🖼️
 
 ## Project Overview
-This project is a computer vision application developed for the **Final Project of [Your Course Name, e.g., Computer Vision]**. 
+This project is a computer vision application developed for the **Final Project of Computer Vision**. 
 
 It implements a robust image stitching pipeline capable of combining three overlapping images (Left, Middle, Right) into a single, seamless high-resolution panorama. The system is designed to handle hand-held shooting conditions, featuring **auto-exposure compensation** and **distance-weighted blending** to eliminate visible seams and lighting inconsistencies.
 
