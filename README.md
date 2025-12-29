@@ -67,8 +67,8 @@ The pipeline consists of 5 main stages:
 
 ## 👥 Team Members
 
-* **[Your Name / Zixi Q.]**: Algorithm implementation, Exposure Compensation, Blending logic.
-* **[Teammate Name]**: Feature Matching pipeline, Testing, Project documentation.
+* **[QIUZIXI]**: Algorithm implementation, Exposure Compensation, Blending logic.
+* **[YANGZHIYI]**: Feature Matching pipeline, Testing, Project documentation.
 
 ## 📄 License
 
