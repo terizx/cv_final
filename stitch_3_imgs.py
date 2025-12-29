@@ -180,15 +180,30 @@ def stitch_images(left_img, mid_img, right_img):
     # --- Step 5: Post-processing (Crop black edges) ---
     print("[6/6] Auto-cropping...")
     gray = cv2.cvtColor(final_result, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(gray, 5, 255, cv2.THRESH_BINARY)
-    coords = cv2.findNonZero(thresh)
-    if coords is not None:
-        x, y, w, h = cv2.boundingRect(coords)
-        # Add a small padding crop to remove edge artifacts
-        padding = 2
-        final_result = final_result[y+padding:y+h-padding, x+padding:x+w-padding]
+
+    _, thresh = cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)
+
+    kernel = np.ones((21, 21), np.uint8)
+    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=1)
+    thresh = cv2.erode(thresh, kernel, iterations=2)
+
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if contours:
+        c = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(c)
+
+        pad_x = 20  
+        pad_y = 85
+
+        x2 = max(x + pad_x, 0)
+        y2 = max(y + pad_y, 0)
+        w2 = max(w - 2 * pad_x, 1)
+        h2 = max(h - 2 * pad_y, 1)
+
+        final_result = final_result[y2:y2+h2, x2:x2+w2]
 
     return final_result
+
 
 if __name__ == '__main__':
     # Load images
