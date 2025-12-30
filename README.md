@@ -9,7 +9,7 @@ It implements a robust image stitching pipeline capable of combining three overl
 
 * **Multi-Image Stitching:** Seamlessly stitches 3 images based on a center-reference geometry.
 * **Robust Feature Matching:** Utilizes **SIFT** (Scale-Invariant Feature Transform) with **RANSAC** for accurate homography estimation.
-* **Exposure Compensation:** Automatically analyzes and adjusts brightness differences (Gain analysis in HSV space) between images to fix "day-and-night" inconsistencies.
+* **Exposure Compensation:** AApplies Global Exposure Compensation by analyzing the overall brightness difference (Mean of V-channel in HSV) between images to fix "day-and-night" inconsistencies.
 * **Advanced Blending:** Implements **Distance-based Weighted Blending** (using Euclidean Distance Transform) to ensure smooth transitions and suppress ghosting caused by parallax.
 * **Smart Auto-Cropping:** Implements an **Adaptive Cropping Algorithm**. It attempts an aggressive rectangular crop first, but includes a **Smart Fallback Mechanism** to automatically switch to a safe bounding box if significant image distortion is detected (preserving content over shape).
 
@@ -61,7 +61,7 @@ It implements a robust image stitching pipeline capable of combining three overl
 
 The pipeline consists of 5 main stages:
 
-1.  **Pre-processing:** Computes the brightness gain between overlapping images and applies exposure compensation.
+1.  **Pre-processing:** Computes the global brightness gain based on the whole-image mean and applies exposure compensation to normalize lighting.
 2.  **Feature Matching:** Extracts SIFT keypoints and matches them using KNN (k=2) with Lowe's Ratio Test. The system generates visualization images (green lines for inliers) for verification.
 3.  **Homography:** Calculates the transformation matrix using RANSAC to align the Left and Right images to the Middle plane.
 4.  **Warping & Blending:** Warps images to a common coordinate system and blends them using a **Distance Weight Map**, where pixels closer to the center have higher opacity.
