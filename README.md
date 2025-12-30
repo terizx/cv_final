@@ -9,7 +9,7 @@ It implements a robust image stitching pipeline capable of combining three overl
 
 * **Multi-Image Stitching:** Seamlessly stitches 3 images based on a center-reference geometry.
 * **Robust Feature Matching:** Utilizes **SIFT** (Scale-Invariant Feature Transform) with **RANSAC** for accurate homography estimation.
-* **Exposure Compensation:** AApplies Global Exposure Compensation by analyzing the overall brightness difference (Mean of V-channel in HSV) between images to fix "day-and-night" inconsistencies.
+* **Exposure Compensation:** Applies Global Exposure Compensation by analyzing the overall brightness difference (Mean of V-channel in HSV) between images to fix "day-and-night" inconsistencies.
 * **Advanced Blending:** Implements **Distance-based Weighted Blending** (using Euclidean Distance Transform) to ensure smooth transitions and suppress ghosting caused by parallax.
 * **Smart Auto-Cropping:** Implements an **Adaptive Cropping Algorithm**. It attempts an aggressive rectangular crop first, but includes a **Smart Fallback Mechanism** to automatically switch to a safe bounding box if significant image distortion is detected (preserving content over shape).
 
