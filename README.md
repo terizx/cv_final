@@ -40,7 +40,7 @@ It implements a robust image stitching pipeline capable of combining three overl
     ```bash
     pip install numpy opencv-python
     ```
-> **Note:** To ensure `cv2.SIFT_create()` works correctly on all platforms, we recommend installing the contrib version.
+  > **Note:** To ensure `cv2.SIFT_create()` works correctly on all platforms, we recommend installing the contrib version.
 
 3.  **Prepare your images:**
     Place your image sets in the `images/` folder (e.g., `images/set1/`, `images/baseline/`). Each folder must contain:
