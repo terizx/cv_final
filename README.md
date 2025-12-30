@@ -13,14 +13,22 @@ It implements a robust image stitching pipeline capable of combining three overl
 * **Advanced Blending:** Implements **Distance-based Weighted Blending** (using Euclidean Distance Transform) to ensure smooth transitions and suppress ghosting caused by parallax.
 * **Smart Auto-Cropping:** Implements an **Adaptive Cropping Algorithm**. It attempts an aggressive rectangular crop first, but includes a **Smart Fallback Mechanism** to automatically switch to a safe bounding box if significant image distortion is detected (preserving content over shape).
 
-## 🛠️ Tech Stack
+## 🛠️ Requirements: Software
 
-* **Language:** Python 3.9+
-* **Libraries:**
-    * `opencv-python` (Computer Vision algorithms)
+* **Operating System:** Windows / macOS / Linux
+* **Python Version:** Python 3.9+
+* **Dependencies:**
     * `numpy` (Matrix operations)
+    * `opencv-python` (Computer Vision algorithms)
 
-## 🚀 Installation & Usage
+## 🧩 Pretrained Models
+
+> **Note:** This project implements **Classical Computer Vision Algorithms (SIFT + Homography)** rather than Deep Learning methods.
+
+* **No Model Files Needed:** Unlike CNNs or Transformers, our approach does not require training or pretrained weight files (e.g., `.pth` or `.onnx`).
+* **Algorithm:** The feature extraction and matching are performed mathematically using standard SIFT descriptors.   
+
+## 🚀 Preparation for Testing
 
 1.  **Clone the repository:**
     ```bash
