@@ -77,6 +77,15 @@ To ensure the best visual quality, we implemented a multi-stage post-processing 
 | :---: | :---: | :---: |
 | <img src="result_images/result_set2_step1_raw.jpg" width="100%"> | <img src="result_images/result_set2_step2_bbox.jpg" width="100%"> | <img src="result_images/result_set2_step3_final.jpg" width="100%"> |
 
+### 🌍 Gallery: Diversity Analysis
+We evaluated the algorithm on various scene types to demonstrate its robustness across different geometric structures and lighting conditions.
+
+| Scene Type | Final Panorama |
+| :--- | :--- |
+| **Set 1: Modern Office Complex**<br>(Challenges: Straight lines & Geometric perspective) | <img src="result_images/result_set1_step3_final.jpg" width="100%"> |
+| **Set 3: Museum Architecture**<br>(Challenges: Curved surfaces & Repetitive patterns) | <img src="result_images/result_set3_step3_final.jpg" width="100%"> |
+| **Set 4: Mountain Landscape**<br>(Challenges: Natural features, Trees & Long distance) | <img src="result_images/result_set4_step3_final.jpg" width="100%"> |
+
 ## 👥 Team Members
 
 * **QIUZIXI**: Algorithm implementation, Exposure Compensation, Blending logic.
