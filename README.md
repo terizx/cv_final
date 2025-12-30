@@ -54,14 +54,15 @@ It implements a robust image stitching pipeline capable of combining three overl
     ```
 
 5.  **Check the result:**
-    The results will be saved in the `result_images/` directory, including intermediate visualization steps.
+    * **Final Panoramas:** Saved in the `result_images/` directory.
+    * **Feature Matching Visualizations:** Saved in the `match_images/` directory (showing RANSAC inliers).
 
 ## 📊 Methodology
 
 The pipeline consists of 5 main stages:
 
 1.  **Pre-processing:** Computes the brightness gain between overlapping images and applies exposure compensation.
-2.  **Feature Matching:** Extracts SIFT keypoints and matches them using KNN (k=2) with Lowe's Ratio Test.
+2.  **Feature Matching:** Extracts SIFT keypoints and matches them using KNN (k=2) with Lowe's Ratio Test. The system generates visualization images (green lines for inliers) for verification.
 3.  **Homography:** Calculates the transformation matrix using RANSAC to align the Left and Right images to the Middle plane.
 4.  **Warping & Blending:** Warps images to a common coordinate system and blends them using a **Distance Weight Map**, where pixels closer to the center have higher opacity.
 5.  **Post-processing:** Uses a smart algorithm to crop the valid area. It visualizes the crop box before generating the final output.

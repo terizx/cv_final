@@ -8,7 +8,6 @@ import os
 # ==========================================
 
 def compensate_exposure(target_img, ref_img):
-    """Simple exposure compensation."""
     hsv_tgt = cv2.cvtColor(target_img, cv2.COLOR_BGR2HSV)
     hsv_ref = cv2.cvtColor(ref_img, cv2.COLOR_BGR2HSV)
     mean_tgt = np.mean(hsv_tgt[:,:,2])
@@ -25,93 +24,93 @@ def resize_img(img, width=800):
     scale = width / w
     return cv2.resize(img, (int(w*scale), int(h*scale)))
 
-# ==========================================
-#  [NEW] Cropping with Visualization Data
-# ==========================================
 def get_crop_coords(img):
-    """
-    Calculates crop coordinates.
-    Includes a 'Smart Fallback' to prevent over-cropping on distorted images.
-    """
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
-    
-    # 1. Basic Bounding Box 
     coords = cv2.findNonZero(thresh)
     if coords is None: return 0, img.shape[0], 0, img.shape[1]
     x, y, w, h = cv2.boundingRect(coords)
-    
-    # limits inside the image
     img_h, img_w = img.shape[:2]
-    
-    # 2. Aggressive Scanning 
     threshold_percent = 0.8  
-    
     top, bottom, left, right = y, y+h, x, x+w
-    
-    # Scan from top
     for r in range(y, y+h):
         if np.count_nonzero(thresh[r, x:x+w]) / w > threshold_percent:
             top = r
             break
-    # Scan from bottom
     for r in range(y+h-1, y-1, -1):
         if np.count_nonzero(thresh[r, x:x+w]) / w > threshold_percent:
             bottom = r
             break
-    # Scan from left
     for c in range(x, x+w):
         if np.count_nonzero(thresh[top:bottom, c]) / (bottom-top) > threshold_percent:
             left = c
             break
-    # Scan from right
     for c in range(x+w-1, x-1, -1):
         if np.count_nonzero(thresh[top:bottom, c]) / (bottom-top) > threshold_percent:
             right = c
             break
-
-    # --- 3. Smart Fallback  ---
-   
     area_bbox = w * h
-   
     crop_w = right - left
     crop_h = bottom - top
     area_crop = crop_w * crop_h
-    
-   
     if area_crop < 0.6 * area_bbox:
-        print("  [Info] Distortion too high. Switching to 'Safe Mode' cropping.")
-        padding_ratio = 0.02 # 2% padding
-        
+        padding_ratio = 0.02
         safe_top = y + int(h * padding_ratio)
         safe_bottom = y + h - int(h * padding_ratio)
         safe_left = x + int(w * padding_ratio)
         safe_right = x + w - int(w * padding_ratio)
-        
         return safe_top, safe_bottom, safe_left, safe_right
     else:
-       
         return top, bottom, left, right
 
 # ==========================================
-#  Core Logic
+#  Core Logic: Feature Matching & Visualization
 # ==========================================
 
-def get_homography(img1, img2, sift):
+def get_homography(img1, img2, sift, name="Pair", vis_save_path=None):
+    """
+    Computes Homography and optionally saves a visualization of matches.
+    """
+    # 1. Detect features
     kp1, des1 = sift.detectAndCompute(img1, None)
     kp2, des2 = sift.detectAndCompute(img2, None)
+    
+    # 2. Match features
     bf = cv2.BFMatcher()
     matches = bf.knnMatch(des1, des2, k=2)
+    
+    # 3. Filter matches (Lowe's ratio test)
     good = []
     for m, n in matches:
         if m.distance < 0.75 * n.distance:
             good.append(m)
+            
+    # 4. Compute Homography if enough matches are found
     if len(good) > 10:
         src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
+        
         H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+        
+        # --- Stats Printing ---
+        num_matches = len(good)
+        num_inliers = int(mask.sum()) if mask is not None else 0
+        inlier_ratio = num_inliers / num_matches if num_matches > 0 else 0
+        print(f"    📊 [Stats {name}] Matches: {num_matches} | Inliers: {num_inliers} | Ratio: {inlier_ratio:.2%}")
+        
+        # --- Visualization: Draw Inliers ---
+        if vis_save_path is not None:
+            matchesMask = mask.ravel().tolist()
+            draw_params = dict(matchColor=(0, 255, 0), # Green color for inliers
+                               singlePointColor=None,
+                               matchesMask=matchesMask, # Only draw inliers
+                               flags=2) 
+            img_vis = cv2.drawMatches(img1, kp1, img2, kp2, good, None, **draw_params)
+            cv2.imwrite(vis_save_path, img_vis)
+        
         return H
     else:
+        print(f"Warning: Not enough matches found for {name}!")
         return None
 
 def create_weight_map(img):
@@ -125,7 +124,7 @@ def create_weight_map(img):
 #  Stitching Pipeline
 # ==========================================
 
-def stitch_images(left_img, mid_img, right_img, set_name, output_dir):
+def stitch_images(left_img, mid_img, right_img, set_name, output_dir, match_dir):
     print(f"[{set_name}] Processing...")
     
     # 1. Pre-processing
@@ -134,8 +133,15 @@ def stitch_images(left_img, mid_img, right_img, set_name, output_dir):
 
     # 2. Matching
     sift = cv2.SIFT_create()
-    H_left = get_homography(left_img, mid_img, sift)
-    H_right = get_homography(right_img, mid_img, sift)
+    
+    
+    vis_path_L = os.path.join(match_dir, f'vis_match_{set_name}_left_mid.jpg')
+    vis_path_R = os.path.join(match_dir, f'vis_match_{set_name}_right_mid.jpg')
+    
+    # Pass paths to get_homography
+    H_left = get_homography(left_img, mid_img, sift, name="Left->Mid", vis_save_path=vis_path_L)
+    H_right = get_homography(right_img, mid_img, sift, name="Right->Mid", vis_save_path=vis_path_R)
+    
     if H_left is None or H_right is None: return None
 
     # 3. Canvas
@@ -177,23 +183,22 @@ def stitch_images(left_img, mid_img, right_img, set_name, output_dir):
                      warped_right.astype(np.float32) * w_right_3ch) / w_sum_3ch
     final_result = np.clip(blended_float, 0, 255).astype(np.uint8)
 
-    # --- SAVE STEP 1: Raw Stitched Image ---
+    # Save Step 1
     cv2.imwrite(os.path.join(output_dir, f'result_{set_name}_step1_raw.jpg'), final_result)
 
-    # 6. Auto-cropping & Visualization
+    # 6. Auto-cropping
     top, bottom, left, right = get_crop_coords(final_result)
     
-    # --- SAVE STEP 2: Visualization with Red Box ---
+    # Save Step 2 (Red Box)
     vis_img = final_result.copy()
-    # Draw Red Rectangle (BGR: 0, 0, 255), thickness 5
     cv2.rectangle(vis_img, (left, top), (right, bottom), (0, 0, 255), 5)
     cv2.imwrite(os.path.join(output_dir, f'result_{set_name}_step2_bbox.jpg'), vis_img)
 
-    # --- SAVE STEP 3: Final Cropped Image ---
+    # Save Step 3 (Final)
     final_crop = final_result[top:bottom, left:right]
     cv2.imwrite(os.path.join(output_dir, f'result_{set_name}_step3_final.jpg'), final_crop)
     
-    print(f"✅ [{set_name}] Saved 3 images (Raw, BBox, Final).")
+    print(f"✅ [{set_name}] All steps saved.")
 
 # ==========================================
 #  Batch Execution
@@ -202,13 +207,14 @@ def stitch_images(left_img, mid_img, right_img, set_name, output_dir):
 if __name__ == '__main__':
     input_root = 'images'
     output_dir = 'result_images'
+    match_dir = 'match_images'  
     
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    if not os.path.exists(output_dir): os.makedirs(output_dir)
+    if not os.path.exists(match_dir): os.makedirs(match_dir) 
 
     subfolders = [f.path for f in os.scandir(input_root) if f.is_dir()]
-    subfolders.sort() # Ensure order
-    print(f"Found {len(subfolders)} sets. Starting...\n")
+    subfolders.sort()
+    print(f"Found {len(subfolders)} sets.\n")
 
     for folder in subfolders:
         set_name = os.path.basename(folder)
@@ -223,8 +229,9 @@ if __name__ == '__main__':
             l = resize_img(cv2.imread(path_l))
             m = resize_img(cv2.imread(path_m))
             r = resize_img(cv2.imread(path_r))
-            stitch_images(l, m, r, set_name, output_dir)
+           
+            stitch_images(l, m, r, set_name, output_dir, match_dir)
         except Exception as e:
             print(f"❌ [{set_name}] Error: {str(e)}\n")
 
-    print("\n=== All Done ===")
+    print("\n=== Processing Complete ===")
